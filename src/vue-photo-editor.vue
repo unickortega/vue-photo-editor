@@ -484,6 +484,7 @@ export default {
   left: 0px;
   width: 100%;
   height: 100%;
+  z-index: 1000;
   .background{
     background: black;
     opacity: 0.75;
