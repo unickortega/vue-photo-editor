@@ -1,51 +1,31 @@
 <template>
   <div>
-    <div class="modal fade" ref="modal" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title">{{title}}</h5>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <div class="modal-body" style="padding:0px;">
-            <div class="editor-container" ref="editor-container">
-              <img class="backdrop-image" ref="backdrop-image" :src="image_source"/>
-              <div class="back-drop" ref="backdrop"></div>
-              <div class="front-image-container" ref="result-image-container">
-                <img class="image" draggable="false" ref="result-image" :src="image_source"/>
-                <div class="frame">
-                  <div class="lines">
-                    <div class="v-line" style="left:33.3333%"></div>
-                    <div class="v-line" style="left:66.6666%"></div>
-                    <div class="h-line" style="top: 33.3333%"></div>
-                    <div class="h-line" style="top: 66.6666%"></div>
-                  </div>
-                </div>
-              </div>
+    <div class="modal-body" style="padding:0px;">
+      <div class="editor-container" ref="editor-container">
+        <img class="backdrop-image" ref="backdrop-image" :src="image_source"/>
+        <div class="back-drop" ref="backdrop"></div>
+        <div class="front-image-container" ref="result-image-container">
+          <img class="image" draggable="false" ref="result-image" :src="image_source"/>
+          <div class="frame">
+            <div class="lines">
+              <div class="v-line" style="left:33.3333%"></div>
+              <div class="v-line" style="left:66.6666%"></div>
+              <div class="h-line" style="top: 33.3333%"></div>
+              <div class="h-line" style="top: 66.6666%"></div>
             </div>
-            <div class="photo-options">
-              <div class="form-group">
-                <label for="customRange3">Zoom Picture</label>
-                <input type="range" step="5" ref="zoom-range" v-model="zoom" class="custom-range" value="0" min="0" max="300" id="customRange3">
-              </div>
-              <div class="form-group text-center">
-                <input type="file" id="inputGroupFile01" class="file-input" ref="file-input" accept="image/x-png,image/jpeg">
-                <button type="button" class="btn btn-default" v-on:click="triggerFileInput">Change Photo</button>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-success" v-on:click="saveImage" data-dismiss="modal">Save</button>
           </div>
         </div>
       </div>
-    </div>
-    <div class="loading" v-show="busy">
-      <div class="background"></div>
-      <img :src="public_path+'/images/loading.gif'" class="loading-icon" alt="">
+      <div class="photo-options">
+        <div class="form-group">
+          <label for="customRange3">Zoom Picture</label>
+          <input type="range" step="5" ref="zoom-range" v-model="zoom" class="custom-range" value="0" min="0" max="300" id="customRange3">
+        </div>
+        <div class="form-group text-center">
+          <input type="file" id="inputGroupFile01" class="file-input" ref="file-input" accept="image/x-png,image/jpeg">
+          <button type="button" class="btn btn-default" v-on:click="triggerFileInput">Change Photo</button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -62,10 +42,6 @@ export default {
         width: 250
       })
     },
-    title:{
-      type: String,
-      default: 'Photo'
-    }
   },
   data : () =>({
     editorDimension:{
@@ -80,14 +56,16 @@ export default {
     image_source: location.origin+'/images/photo.png',
     busy: false,
     image_source_dimensions: {},
-    preffered_diameter: 250
+    preffered_diameter: 250,
+    padding: 15
   }),
   methods: {
     show(image_source){
+      this.preffered_diameter = 250
       this.position = {top: 0, left: 0},
       this.zoom = 0;
       this.image_source = image_source;
-      jQuery(this.$refs.modal).modal('show');
+      this.calculateImageSourceDimensions()
     },
     triggerFileInput(){
       this.$refs['file-input'].click();
@@ -179,7 +157,7 @@ export default {
       var percent = this.zoom / 100;
       var width_result = this.image_source_dimensions.width + ( this.image_source_dimensions.width * percent);
       var height_result = this.image_source_dimensions.height + ( this.image_source_dimensions.height * percent);
-
+      
       if((x <= 0 && (x + width_result) >= jQuery(resultImageContainer).width()) || force){
         _x = x;
       }
@@ -260,7 +238,7 @@ export default {
       var topCenter = (jQuery(resultImage).height() / 2) + jQuery(resultImage).position().top;
       return {left: leftCenter, top: topCenter};
     },
-    saveImage(){
+    saveImage(callback){
       var resultImage = jQuery(this.$refs['result-image']);
       var canvas = document.createElement('canvas');
       var ctx = canvas.getContext("2d");
@@ -333,9 +311,7 @@ export default {
         ctx.drawImage(oc, leftPos, topPos, xzoom, yzoom,
         0, 0, canvas.width, canvas.height);
 
-        console.log(canvas.toDataURL());
-        
-        $this.$emit('update', canvas.toDataURL())
+        callback(canvas.toDataURL())
       }
 
       img.src = $this.image_source;
@@ -349,14 +325,25 @@ export default {
         this.editorDimension.width = this.preffered_diameter;
         this.editorDimension.height = (this.preffered_diameter / this.resultImageDimension.width) * this.resultImageDimension.height;
       }
-      jQuery(this.$refs['result-image-container']).css({'height': this.editorDimension.height, 'width': this.editorDimension.width});
-    }
+      jQuery(this.$refs['result-image-container']).css({'height': this.editorDimension.height, 'width': this.editorDimension.width})
+      this.autoSizeResultImageContainer()
+    },
+    autoSizeResultImageContainer(){
+      var width_min = jQuery(this.$refs['editor-container']).width() - this.padding;
+      if(this.editorDimension.width > width_min){
+        this.editorDimension.width = width_min;
+        this.editorDimension.height = (width_min / this.resultImageDimension.width) * this.resultImageDimension.height
+        jQuery(this.$refs['result-image-container']).css({'height': this.editorDimension.height, 'width': this.editorDimension.width})
+      }
+    },
   },
   mounted(){
     var $this = this;
     var resultImage = jQuery($this.$refs['result-image']);
 
     this.setEditorDimensions();
+    setRenderEvent(this.autoSizeResultImageContainer)
+
     
     jQuery(this.$refs['file-input']).change(function(){
       if(this.files && this.files[0]){
@@ -369,9 +356,6 @@ export default {
       }
     });
 
-    jQuery(this.$refs.modal).on('shown.bs.modal', function (e) {
-      $this.calculateImageSourceDimensions();
-    });
     jQuery(this.$refs['editor-container'])
     .bind('mousedown', dragStart)
     .bind('touchstart', dragStart)
@@ -393,21 +377,44 @@ export default {
     var originalMousePos = {};
     function dragStart(e){
       dragging = true;
-      originalMousePos.top = e.clientY;
-      originalMousePos.left = e.clientX;
+      var pos = e.clientY ? e : e.changedTouches[0]
+      originalMousePos.top = pos.clientY;
+      originalMousePos.left = pos.clientX;
     }
     function dragMove(e){
       if(dragging){
-        var x = e.clientX - originalMousePos.left;
-        var y = e.clientY - originalMousePos.top;
+        var pos = e.clientY ? e : e.changedTouches[0]
+        var x = pos.clientX - originalMousePos.left;
+        var y = pos.clientY - originalMousePos.top;
         var resultImage = $this.$refs['result-image'];
         $this.setImageResultPosition(jQuery(resultImage).position().left + x, jQuery(resultImage).position().top + y);
-        originalMousePos.top = e.clientY;
-        originalMousePos.left = e.clientX;
+        originalMousePos.top = pos.clientY;
+        originalMousePos.left = pos.clientX;
       }
     }
     function dragEnd(e){
       dragging = false;
+    }
+  }
+}
+
+function setRenderEvent(event){
+  var rtime;
+  var timeout = false;
+  var delta = 200;
+  jQuery(window).resize(function(){
+    rtime = new Date();
+    if (timeout === false) {
+        timeout = true;
+        setTimeout(resizeend, delta);
+    }
+  })
+  function resizeend() {
+    if (new Date() - rtime < delta) {
+      setTimeout(resizeend, delta);
+    } else {
+      timeout = false;
+      event()
     }
   }
 }

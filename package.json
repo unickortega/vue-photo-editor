@@ -8,6 +8,7 @@
   "browser": {
     "./sfc": "src/vue-photo-editor.vue"
   },
+  "license": "ISC",
   "scripts": {
     "build": "npm run build:unpkg & npm run build:es & npm run build:umd",
     "build:umd": "rollup --config build/rollup.config.js --format umd --file dist/vue-photo-editor.umd.js",
