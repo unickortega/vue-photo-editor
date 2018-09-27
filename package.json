@@ -1,6 +1,6 @@
 {
   "name": "unick-vue-photo-editor",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "",
   "main": "dist/vue-photo-editor.umd.js",
   "module": "dist/vue-photo-editor.esm.js",
