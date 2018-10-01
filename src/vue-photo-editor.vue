@@ -390,6 +390,8 @@ export default {
         $this.setImageResultPosition(jQuery(resultImage).position().left + x, jQuery(resultImage).position().top + y);
         originalMousePos.top = pos.clientY;
         originalMousePos.left = pos.clientX;
+        // return false so that touch event cancels
+        return e.preventDefault();
       }
     }
     function dragEnd(e){
